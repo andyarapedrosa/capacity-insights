@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Capacity Insights — Yuno</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --purple: #6C47FF;
+    --purple-light: #8B6BFF;
+    --purple-dark: #4A2FD4;
+    --purple-bg: #EEE9FF;
+    --dark: #0D0D1A;
+    --dark2: #16162A;
+    --dark3: #1E1E38;
+    --card: #1A1A30;
+    --border: #2A2A4A;
+    --text: #E8E6F0;
+    --text-muted: #8B89A8;
+    --green: #00D68F;
+    --orange: #FF8C42;
+    --red: #FF4D6A;
+    --blue: #4DAAFF;
+    --yellow: #FFD166;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--dark);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    background: linear-gradient(135deg, var(--dark2) 0%, var(--dark3) 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 24px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-mark {
+    width: 36px;
+    height: 36px;
+    background: var(--purple);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 16px;
+    color: white;
+    letter-spacing: -1px;
+  }
+
+  .logo-text {
+    font-size: 20px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: -0.5px;
+  }
+
+  .header-right {
+    text-align: right;
+  }
+
+  .header-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: white;
+  }
+
+  .header-sub {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    gap: 0;
+    padding: 0 40px;
+    background: var(--dark2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tab {
+    padding: 14px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+
+  .tab:hover { color: var(--text); }
+
+  .tab.active {
+    color: var(--purple-light);
+    border-bottom-color: var(--purple);
+  }
+
+  /* MAIN */
+  main {
+    padding: 32px 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  /* VIEWS */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* KPI CARDS */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .kpi-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--purple);
+  }
+
+  .kpi-card.green::before { background: var(--green); }
+  .kpi-card.orange::before { background: var(--orange); }
+  .kpi-card.blue::before { background: var(--blue); }
+  .kpi-card.yellow::before { background: var(--yellow); }
+
+  .kpi-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .kpi-value {
+    font-size: 36px;
+    font-weight: 800;
+    color: white;
+    line-height: 1;
+  }
+
+  .kpi-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 6px;
+  }
+
+  /* SECTION */
+  .section {
+    margin-bottom: 32px;
+  }
+
+  .section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* GRID 2 cols */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+  }
+
+  /* CARD */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 16px;
+  }
+
+  /* TABLE */
+  .table-wrap {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  thead {
+    background: var(--dark3);
+  }
+
+  th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 11px 16px;
+    border-bottom: 1px solid rgba(42,42,74,0.5);
+    color: var(--text);
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  tr:hover td { background: rgba(108,71,255,0.06); }
+
+  /* BAR */
+  .bar-row {
+    margin-bottom: 14px;
+  }
+
+  .bar-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    font-size: 13px;
+  }
+
+  .bar-name { color: var(--text); font-weight: 500; }
+  .bar-val { color: var(--text-muted); }
+
+  .bar-track {
+    height: 6px;
+    background: var(--dark3);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--purple), var(--purple-light));
+    transition: width 0.8s ease;
+  }
+
+  .bar-fill.green { background: linear-gradient(90deg, #00B577, var(--green)); }
+  .bar-fill.orange { background: linear-gradient(90deg, #CC6A1F, var(--orange)); }
+  .bar-fill.blue { background: linear-gradient(90deg, #2288DD, var(--blue)); }
+
+  /* BADGE */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .badge-strategic { background: rgba(108,71,255,0.2); color: #A88BFF; }
+  .badge-growth { background: rgba(0,214,143,0.15); color: var(--green); }
+  .badge-keymaint { background: rgba(255,209,102,0.15); color: var(--yellow); }
+  .badge-longtail { background: rgba(77,170,255,0.15); color: var(--blue); }
+  .badge-unknown { background: rgba(139,137,168,0.15); color: var(--text-muted); }
+
+  .stage-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  /* PERSON CARD */
+  .person-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  .person-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    transition: border-color 0.2s;
+  }
+
+  .person-card:hover { border-color: var(--purple); }
+
+  .person-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--purple-dark), var(--purple-light));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 15px;
+    color: white;
+    margin-bottom: 12px;
+  }
+
+  .person-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 4px;
+  }
+
+  .person-role {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+  }
+
+  .person-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .stat-box {
+    background: var(--dark3);
+    border-radius: 8px;
+    padding: 10px;
+  }
+
+  .stat-box-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+
+  .stat-box-val {
+    font-size: 18px;
+    font-weight: 700;
+    color: white;
+  }
+
+  .stat-box-sub {
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  /* PIPELINE STAGES */
+  .pipeline {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+
+  .pipeline-col {
+    flex: 0 0 200px;
+    background: var(--dark3);
+    border-radius: 10px;
+    padding: 14px;
+  }
+
+  .pipeline-stage-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+
+  .pipeline-count {
+    font-size: 24px;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 8px;
+  }
+
+  .pipeline-item {
+    background: var(--card);
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    font-size: 12px;
+  }
+
+  .pipeline-item-name { color: var(--text); font-weight: 500; }
+  .pipeline-item-se { color: var(--text-muted); font-size: 11px; margin-top: 2px; }
+
+  /* TAG */
+  .tag-list { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+    background: var(--dark3);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+
+  /* CHART container */
+  .chart-wrap {
+    position: relative;
+    height: 260px;
+  }
+
+  /* ALERT */
+  .alert {
+    background: rgba(255,76,106,0.1);
+    border: 1px solid rgba(255,76,106,0.3);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #FF8099;
+    margin-bottom: 16px;
+  }
+
+  .alert.warn {
+    background: rgba(255,140,66,0.1);
+    border-color: rgba(255,140,66,0.3);
+    color: #FFAA77;
+  }
+
+  .alert.info {
+    background: rgba(108,71,255,0.1);
+    border-color: rgba(108,71,255,0.3);
+    color: #A88BFF;
+  }
+
+  /* POPOVER TOOLTIP */
+  .pop {
+    position: fixed;
+    z-index: 9999;
+    background: #0D0D1A;
+    border: 1px solid var(--purple);
+    border-radius: 10px;
+    padding: 12px 16px;
+    min-width: 200px;
+    max-width: 280px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  }
+  .pop.visible { opacity: 1; }
+  .pop-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--purple-light);
+    margin-bottom: 8px;
+  }
+  .pop-item {
+    font-size: 12px;
+    color: var(--text);
+    padding: 3px 0;
+    border-bottom: 1px solid rgba(42,42,74,0.4);
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .pop-item:last-child { border-bottom: none; }
+  .pop-item-rev { color: var(--green); font-size: 11px; white-space: nowrap; }
+
+  .stat-box[data-tip] { cursor: default; }
+  .stat-box[data-tip]:hover { background: rgba(108,71,255,0.15); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--dark2); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .chip {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    background: rgba(108,71,255,0.15);
+    color: var(--purple-light);
+  }
+
+  .number-highlight { color: var(--purple-light); font-weight: 700; }
+
+  .text-green { color: var(--green); }
+  .text-orange { color: var(--orange); }
+  .text-red { color: var(--red); }
+  .text-blue { color: var(--blue); }
+  .text-yellow { color: var(--yellow); }
+  .text-muted { color: var(--text-muted); }
+
+  .fw-bold { font-weight: 700; }
+
+  @media (max-width: 900px) {
+    main { padding: 20px; }
+    header { padding: 16px 20px; }
+    .tabs { padding: 0 20px; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <svg width="120" height="25" viewBox="0 0 1920 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_72_4079)">
+<path d="M37.8696 20C28.0088 20 20 28.0241 20 37.9036C20 47.7831 28.0088 55.8072 37.8696 55.8072C47.7304 55.8072 55.7392 47.7831 55.7392 37.9036C55.7392 28.0241 47.7304 20 37.8696 20Z" fill="white"/>
+<path d="M96.6001 20.0012C86.7393 20.0012 78.7305 28.0253 78.7305 37.9048C78.7305 47.7843 86.7393 55.8084 96.6001 55.8084C106.461 55.8084 114.47 47.7843 114.47 37.9048C114.47 28.0253 106.461 20.0012 96.6001 20.0012Z" fill="white"/>
+<path d="M155.331 44.7713C159.117 44.7713 162.185 41.6967 162.185 37.9039C162.185 34.1111 159.117 31.0364 155.331 31.0364C151.545 31.0364 148.477 34.1111 148.477 37.9039C148.477 41.6967 151.545 44.7713 155.331 44.7713Z" fill="white"/>
+<path d="M37.8714 107.881C43.9283 107.881 48.8385 102.962 48.8385 96.8931C48.8385 90.8246 43.9283 85.9052 37.8714 85.9052C31.8144 85.9052 26.9043 90.8246 26.9043 96.8931C26.9043 102.962 31.8144 107.881 37.8714 107.881Z" fill="white"/>
+<path d="M96.6001 78.9899C86.7393 78.9899 78.7305 87.0139 78.7305 96.8935C78.7305 106.773 86.7393 114.797 96.6001 114.797C106.461 114.797 114.47 106.773 114.47 96.8935C114.47 87.0139 106.461 78.9899 96.6001 78.9899Z" fill="white"/>
+<path d="M155.332 107.881C161.393 107.881 166.299 102.965 166.299 96.8931C166.299 90.8208 161.393 85.9052 155.332 85.9052C149.272 85.9052 144.365 90.8208 144.365 96.8931C144.365 102.965 149.272 107.881 155.332 107.881Z" fill="white"/>
+<path d="M37.87 148.845C34.0941 148.845 31.0156 151.929 31.0156 155.712C31.0156 159.495 34.0941 162.58 37.87 162.58C41.646 162.58 44.7245 159.495 44.7245 155.712C44.7245 151.929 41.646 148.845 37.87 148.845Z" fill="white"/>
+<path d="M96.6001 137.809C86.7393 137.809 78.7305 145.834 78.7305 155.713C78.7305 165.593 86.7393 173.617 96.6001 173.617C106.461 173.617 114.47 165.593 114.47 155.713C114.47 145.834 106.461 137.809 96.6001 137.809Z" fill="white"/>
+<path d="M155.331 137.809C145.47 137.809 137.461 145.834 137.461 155.713C137.461 165.593 145.47 173.617 155.331 173.617C165.191 173.617 173.2 165.593 173.2 155.713C173.2 145.834 165.191 137.809 155.331 137.809Z" fill="white"/>
+<path d="M214.159 44.7713C217.935 44.7713 221.014 41.687 221.014 37.9039C221.014 34.1207 217.935 31.0364 214.159 31.0364C210.383 31.0364 207.305 34.1207 207.305 37.9039C207.305 41.687 210.383 44.7713 214.159 44.7713Z" fill="white"/>
+<path d="M272.894 55.8084C282.763 55.8084 290.764 47.7927 290.764 37.9048C290.764 28.0169 282.763 20.0012 272.894 20.0012C263.025 20.0012 255.024 28.0169 255.024 37.9048C255.024 47.7927 263.025 55.8084 272.894 55.8084Z" fill="white"/>
+<path d="M331.625 20.0012C321.764 20.0012 313.755 28.0253 313.755 37.9048C313.755 47.7843 321.764 55.8084 331.625 55.8084C341.485 55.8084 349.494 47.7843 349.494 37.9048C349.494 28.0253 341.485 20.0012 331.625 20.0012Z" fill="white"/>
+<path d="M214.16 107.881C220.221 107.881 225.128 102.965 225.128 96.8931C225.128 90.8208 220.221 85.9052 214.16 85.9052C208.1 85.9052 203.193 90.8208 203.193 96.8931C203.193 102.965 208.1 107.881 214.16 107.881Z" fill="white"/>
+<path d="M272.894 78.9899C263.033 78.9899 255.024 87.0139 255.024 96.8935C255.024 106.773 263.033 114.797 272.894 114.797C282.755 114.797 290.764 106.773 290.764 96.8935C290.764 87.0139 282.755 78.9899 272.894 78.9899Z" fill="white"/>
+<path d="M331.626 85.9052C325.566 85.9052 320.659 90.8208 320.659 96.8931C320.659 102.965 325.566 107.881 331.626 107.881C337.687 107.881 342.593 102.965 342.593 96.8931C342.593 90.8208 337.687 85.9052 331.626 85.9052Z" fill="white"/>
+<path d="M272.894 137.809C263.033 137.809 255.024 145.834 255.024 155.713C255.024 165.593 263.033 173.617 272.894 173.617C282.755 173.617 290.764 165.593 290.764 155.713C290.764 145.834 282.755 137.809 272.894 137.809Z" fill="white"/>
+<path d="M331.625 162.58C335.411 162.58 338.479 159.505 338.479 155.712C338.479 151.919 335.411 148.845 331.625 148.845C327.839 148.845 324.771 151.919 324.771 155.712C324.771 159.505 327.839 162.58 331.625 162.58Z" fill="white"/>
+<path d="M214.159 137.809C204.298 137.809 196.289 145.834 196.289 155.713C196.289 165.593 204.298 173.617 214.159 173.617C224.019 173.617 232.028 165.593 232.028 155.713C232.028 145.834 224.019 137.809 214.159 137.809Z" fill="white"/>
+<path d="M37.87 207.689C34.0941 207.689 31.0156 210.773 31.0156 214.556C31.0156 218.339 34.0941 221.423 37.87 221.423C41.646 221.423 44.7245 218.339 44.7245 214.556C44.7245 210.773 41.646 207.689 37.87 207.689Z" fill="white"/>
+<path d="M96.6018 203.566C90.5411 203.566 85.6348 208.482 85.6348 214.554C85.6348 220.627 90.5411 225.542 96.6018 225.542C102.663 225.542 107.569 220.627 107.569 214.554C107.569 208.482 102.663 203.566 96.6018 203.566Z" fill="white"/>
+<path d="M155.331 196.651C145.47 196.651 137.461 204.675 137.461 214.555C137.461 224.434 145.47 232.458 155.331 232.458C165.191 232.458 173.2 224.434 173.2 214.555C173.2 204.675 165.191 196.651 155.331 196.651Z" fill="white"/>
+<path d="M37.87 266.53C34.0941 266.53 31.0156 269.614 31.0156 273.398C31.0156 277.181 34.0941 280.265 37.87 280.265C41.646 280.265 44.7245 277.181 44.7245 273.398C44.7245 269.614 41.646 266.53 37.87 266.53Z" fill="white"/>
+<path d="M96.6005 266.53C92.8246 266.53 89.7461 269.614 89.7461 273.398C89.7461 277.181 92.8246 280.265 96.6005 280.265C100.376 280.265 103.455 277.181 103.455 273.398C103.455 269.614 100.376 266.53 96.6005 266.53Z" fill="white"/>
+<path d="M155.331 255.495C145.47 255.495 137.461 263.519 137.461 273.399C137.461 283.278 145.47 291.302 155.331 291.302C165.191 291.302 173.2 283.278 173.2 273.399C173.2 263.519 165.191 255.495 155.331 255.495Z" fill="white"/>
+<path d="M37.87 325.519C34.0941 325.519 31.0156 328.603 31.0156 332.386C31.0156 336.169 34.0941 339.254 37.87 339.254C41.646 339.254 44.7245 336.169 44.7245 332.386C44.7245 328.603 41.646 325.519 37.87 325.519Z" fill="white"/>
+<path d="M96.6005 339.254C100.386 339.254 103.455 336.179 103.455 332.386C103.455 328.594 100.386 325.519 96.6005 325.519C92.8149 325.519 89.7461 328.594 89.7461 332.386C89.7461 336.179 92.8149 339.254 96.6005 339.254Z" fill="white"/>
+<path d="M155.331 314.484C145.47 314.484 137.461 322.508 137.461 332.387C137.461 342.267 145.47 350.291 155.331 350.291C165.191 350.291 173.2 342.267 173.2 332.387C173.2 322.508 165.191 314.484 155.331 314.484Z" fill="white"/>
+<path d="M214.159 232.458C224.028 232.458 232.028 224.442 232.028 214.555C232.028 204.667 224.028 196.651 214.159 196.651C204.29 196.651 196.289 204.667 196.289 214.555C196.289 224.442 204.29 232.458 214.159 232.458Z" fill="white"/>
+<path d="M272.891 203.566C266.83 203.566 261.924 208.482 261.924 214.554C261.924 220.627 266.83 225.542 272.891 225.542C278.952 225.542 283.858 220.627 283.858 214.554C283.858 208.482 278.952 203.566 272.891 203.566Z" fill="white"/>
+<path d="M331.625 221.423C335.411 221.423 338.479 218.349 338.479 214.556C338.479 210.763 335.411 207.689 331.625 207.689C327.839 207.689 324.771 210.763 324.771 214.556C324.771 218.349 327.839 221.423 331.625 221.423Z" fill="white"/>
+<path d="M214.159 291.302C224.028 291.302 232.028 283.286 232.028 273.399C232.028 263.511 224.028 255.495 214.159 255.495C204.29 255.495 196.289 263.511 196.289 273.399C196.289 283.286 204.29 291.302 214.159 291.302Z" fill="white"/>
+<path d="M272.894 280.265C276.68 280.265 279.749 277.19 279.749 273.398C279.749 269.605 276.68 266.53 272.894 266.53C269.109 266.53 266.04 269.605 266.04 273.398C266.04 277.19 269.109 280.265 272.894 280.265Z" fill="white"/>
+<path d="M331.625 280.265C335.411 280.265 338.479 277.19 338.479 273.398C338.479 269.605 335.411 266.53 331.625 266.53C327.839 266.53 324.771 269.605 324.771 273.398C324.771 277.19 327.839 280.265 331.625 280.265Z" fill="white"/>
+<path d="M214.159 314.484C204.298 314.484 196.289 322.508 196.289 332.387C196.289 342.267 204.298 350.291 214.159 350.291C224.019 350.291 232.028 342.267 232.028 332.387C232.028 322.508 224.019 314.484 214.159 314.484Z" fill="white"/>
+<path d="M272.894 339.254C276.68 339.254 279.749 336.179 279.749 332.386C279.749 328.594 276.68 325.519 272.894 325.519C269.109 325.519 266.04 328.594 266.04 332.386C266.04 336.179 269.109 339.254 272.894 339.254Z" fill="white"/>
+<path d="M331.625 339.254C335.411 339.254 338.479 336.179 338.479 332.386C338.479 328.594 335.411 325.519 331.625 325.519C327.839 325.519 324.771 328.594 324.771 332.386C324.771 336.179 327.839 339.254 331.625 339.254Z" fill="white"/>
+<path d="M648.466 198.795L555.27 8.48145H461.304L605.03 303.734L566.116 396.747H658.062L815.064 8.48145H723.816L648.466 198.795Z" fill="white"/>
+<path d="M1076.57 186.747C1076.57 186.747 1042.75 263.132 981.039 241.397C951.312 230.939 948.378 191.229 947.969 182.096V8.602H853.955V216.216C854.027 228.12 854.58 243.253 857.034 251.976C881.253 337.903 977.864 321.47 994.411 317.373C1063.44 300.265 1089.03 232.289 1089.03 232.289V318.457H1170.68V8.57788H1076.57V186.747Z" fill="white"/>
+<path d="M1873.46 51.5664C1858.21 36.217 1840.2 24.3856 1819.97 16.4579C1770.79 -1.15654 1716.63 -1.15654 1667.44 16.4579C1647.1 24.3374 1628.99 36.1688 1613.59 51.6387C1599.23 66.2652 1588.2 83.47 1580.88 102.699C1573.48 122.337 1569.75 142.988 1569.82 164.024C1569.72 185.036 1573.45 205.518 1580.88 225.036C1588.48 244.819 1599.98 262.506 1615.01 277.542C1630.04 292.578 1647.75 304.096 1667.59 311.735C1691.78 320.868 1717.28 325.253 1743.23 324.819H1743.51H1743.8C1769.9 325.398 1795.51 320.916 1819.92 311.687C1840.1 303.783 1858.16 291.807 1873.44 276.169C1887.82 261.422 1898.86 244.193 1906.27 224.964C1913.67 205.494 1917.38 185.012 1917.3 164.121C1917.38 142.988 1913.65 122.337 1906.24 102.675C1898.93 83.4459 1887.89 66.2411 1873.46 51.5423V51.5664ZM1810.88 208.048L1810.64 208.554C1804.6 221.301 1795.13 232.024 1783.22 239.59L1782.84 239.832C1773.87 245.157 1764.08 248.53 1753.71 249.831C1750.51 250.241 1747.29 250.434 1744.09 250.434C1737 250.434 1729.93 249.422 1723.02 247.422C1713.02 244.506 1703.86 239.663 1695.82 233.012C1687.79 226.362 1681.32 218.265 1676.61 208.94L1676.34 208.41C1669.97 194.53 1666.77 179.133 1667.08 163.88C1666.75 148.603 1669.94 133.181 1676.34 119.301C1682.35 106.386 1691.85 95.6146 1703.88 88.0965L1704.14 87.9278C1713.11 82.5543 1722.9 79.1567 1733.29 77.8314C1743.66 76.5061 1754 77.3013 1764.03 80.217C1774.06 83.1327 1783.22 88.0001 1791.26 94.6989C1799.29 101.374 1805.73 109.518 1810.45 118.844L1810.83 119.687C1816.85 133.735 1819.9 148.578 1819.9 163.88C1819.9 179.181 1816.85 194.024 1810.83 208.072L1810.88 208.048Z" fill="white"/>
+<path d="M1392.35 9.56657C1323.33 26.675 1297.74 94.6509 1297.74 94.6509V8.48221H1216.08V318.362H1310.19V140.193C1310.19 140.193 1344.01 63.8075 1405.72 85.5425C1435.45 96.0003 1438.38 135.711 1438.79 144.844V318.338H1532.81V110.723C1532.73 98.8196 1532.18 83.687 1529.73 74.9641C1505.51 -10.9636 1408.9 5.47019 1392.35 9.56657Z" fill="white"/>
+</g>
+<defs>
+<clipPath id="clip0_72_4079">
+<rect width="1920" height="400" fill="white"/>
+</clipPath>
+</defs>
+</svg>
+  </div>
+  <div class="header-right">
+    <div class="header-title">Capacity Planning</div>
+    <div class="header-sub">Big Picture — TAMs/IMs &amp; Pipeline · April 2026</div>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchView('overview')">Overview</div>
+  <div class="tab" onclick="switchView('tam')">TAM · Live Accounts</div>
+  <div class="tab" onclick="switchView('pipeline')">SE · Pipeline</div>
+  <div class="tab" onclick="switchView('people')">People View</div>
+</div>
+
+<main>
+
+<!-- ==================== OVERVIEW ==================== -->
+<div id="view-overview" class="view active">
+
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">Accounts Live</div>
+      <div class="kpi-value" id="kpi-live">—</div>
+      <div class="kpi-sub">excl. NOC</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Active TAMs</div>
+      <div class="kpi-value" id="kpi-tams">—</div>
+      <div class="kpi-sub">with LIVE accounts</div>
+    </div>
+    <div class="kpi-card" style="--card-accent: #00B577;">
+      <div class="kpi-label">Active IMs</div>
+      <div class="kpi-value" id="kpi-ims">3</div>
+      <div class="kpi-sub">Pedro · Carlos · Helio</div>
+    </div>
+    <div class="kpi-card blue">
+      <div class="kpi-label">Opps Early Stage</div>
+      <div class="kpi-value" id="kpi-opps">—</div>
+      <div class="kpi-sub">incl. no SE assigned</div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-label">Unassigned Opps</div>
+      <div class="kpi-value" id="kpi-unassigned">—</div>
+      <div class="kpi-sub">no SE engineer assigned</div>
+    </div>
+    <div class="kpi-card yellow">
+      <div class="kpi-label">Total Pipeline TAR</div>
+      <div class="kpi-value" id="kpi-tar">—</div>
+      <div class="kpi-sub">Early Stage + Contract Signed</div>
+    </div>
+  </div>
+
+  <div class="alert warn" id="alert-unassigned"></div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Accounts by TAM &amp; IM</div>
+      <div class="chart-wrap">
+        <canvas id="chart-tam-accounts"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Distribution by Category</div>
+      <div class="chart-wrap">
+        <canvas id="chart-category"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div style="height: 20px;"></div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Early Stage Opps by SE</div>
+      <div class="chart-wrap">
+        <canvas id="chart-se-opps"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Pipeline Stages</div>
+      <div class="chart-wrap">
+        <canvas id="chart-stages"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ==================== TAM VIEW ==================== -->
+<div id="view-tam" class="view">
+
+  <div class="section">
+    <div class="section-title">Workload Distribution by TAM</div>
+    <div id="tam-bars"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Detail: LIVE Accounts by TAM</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:12px;">
+      <input id="f-merchant" type="text" placeholder="Search Merchant…" oninput="filterTamTable()"
+        style="background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;outline:none;">
+      <select id="f-tam" onchange="filterTamTable()"
+        style="background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;outline:none;">
+        <option value="">All TAMs / IMs</option>
+      </select>
+      <select id="f-category" onchange="filterTamTable()"
+        style="background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;outline:none;">
+        <option value="">All Categories</option>
+        <option value="Strategic">Strategic</option>
+        <option value="Growth">Growth</option>
+        <option value="Key maintenance">Key maintenance</option>
+        <option value="Long tail">Long tail</option>
+      </select>
+      <input id="f-revenue" type="number" placeholder="Min Revenue (USD)…" oninput="filterTamTable()"
+        style="background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;outline:none;">
+    </div>
+    <div class="table-wrap">
+      <table id="tam-table">
+        <thead>
+          <tr>
+            <th>Merchant</th>
+            <th>TAM</th>
+            <th>Category</th>
+            <th>Revenue (USD)</th>
+          </tr>
+        </thead>
+        <tbody id="tam-tbody"></tbody>
+      </table>
+    </div>
+    <div id="f-count" style="font-size:12px;color:var(--text-muted);margin-top:8px;text-align:right;"></div>
+  </div>
+
+</div>
+
+<!-- ==================== PIPELINE VIEW ==================== -->
+<div id="view-pipeline" class="view">
+
+  <div class="kpi-grid">
+    <div class="kpi-card blue">
+      <div class="kpi-label">Total Early Stage</div>
+      <div class="kpi-value" id="kpi-p-early">—</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Contract Signed</div>
+      <div class="kpi-value" id="kpi-p-contract">—</div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-label">No SE Assigned</div>
+      <div class="kpi-value" id="kpi-p-unassigned">—</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Early Stage — By SE Engineer</div>
+    <div id="se-bars-early"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Contract Signed — In Implementation</div>
+    <div id="se-bars-contract"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Pipeline by Stage (Early Stage)</div>
+    <div class="pipeline" id="pipeline-cols"></div>
+  </div>
+
+</div>
+
+<!-- ==================== PEOPLE VIEW ==================== -->
+<div id="view-people" class="view">
+
+  <div class="alert info">
+    Consolidated view: each person appears with their TAM (LIVE accounts) and SE (pipeline opportunities) roles.
+  </div>
+
+  <div class="person-grid" id="person-grid"></div>
+
+</div>
+
+</main>
+
+<script>
+// ===================== DATA =====================
+const liveAccounts = [{"merchant": "AB-InBev B2B", "tam": "Pedro Scarapicchia Junior", "category": "Strategic", "revenue": 9334.0}, {"merchant": "Ant Group", "tam": "Carlos Andres Medina Rivas", "category": "Strategic", "revenue": 1.0}, {"merchant": "Aposta Ganha", "tam": "Sarah Figueiredo Brandao Santiago", "category": "Strategic", "revenue": 3000.0}, {"merchant": "Arcos Dorados - AR", "tam": "David Felipe Rios Robby", "category": "Strategic", "revenue": 3937.0}, {"merchant": "Arcos Dorados - BR", "tam": "Emanuel Graciano Guiraud", "category": "Strategic", "revenue": 50041.0}, {"merchant": "Arcos Dorados - LATAM", "tam": "David Felipe Rios Robby", "category": "Strategic", "revenue": 47317.0}, {"merchant": "Big box", "tam": "Katherine Lesmes", "category": "Growth", "revenue": 11300.0}, {"merchant": "Brasil Paralelo", "tam": "Helio Cantelli", "category": "Growth", "revenue": 11303.0}, {"merchant": "Busbud", "tam": "Katherine Lesmes", "category": "Growth", "revenue": 9000.0}, {"merchant": "Buscalibre", "tam": "Katherine Lesmes", "category": "Long tail", "revenue": 5000.0}, {"merchant": "Casas Bahia", "tam": "Helio Cantelli", "category": "Strategic", "revenue": 5008.0}, {"merchant": "CopaAir", "tam": "Carlos Andres Medina Rivas", "category": "Strategic", "revenue": 10054.0}, {"merchant": "Dlocal", "tam": "David Felipe Rios Robby", "category": "Strategic", "revenue": 3600.0}, {"merchant": "Draftea", "tam": "David Felipe Rios Robby", "category": "Growth", "revenue": 24316.0}, {"merchant": "Farmatodo", "tam": "Katherine Lesmes", "category": "Growth", "revenue": 5730.0}, {"merchant": "Garena", "tam": "Deisy Paola Leal", "category": "Strategic", "revenue": 3942.0}, {"merchant": "Grupo Azzas", "tam": "Amanda Lie Kaneko", "category": "Growth", "revenue": 10200.0}, {"merchant": "Habibs", "tam": "Sarah Figueiredo Brandao Santiago", "category": "Growth", "revenue": 3516.0}, {"merchant": "Hotmart", "tam": "Emanuel Graciano Guiraud", "category": "Strategic", "revenue": 27448.0}, {"merchant": "Hub la", "tam": "Sarah Figueiredo Brandao Santiago", "category": "Growth", "revenue": 7671.0}, {"merchant": "INTI", "tam": "Amanda Lie Kaneko", "category": "Growth", "revenue": 3000.0}, {"merchant": "Jetsmart", "tam": "Carlos Andres Medina Rivas", "category": "Growth", "revenue": 10983.0}, {"merchant": "JusBrasil", "tam": "Emanuel Graciano Guiraud", "category": "Growth", "revenue": 13180.0}, {"merchant": "Koin", "tam": "Katherine Lesmes", "category": "Growth", "revenue": 441.0}, {"merchant": "Lidercap", "tam": "Emanuel Graciano Guiraud", "category": "Key maintenance", "revenue": 8757.0}, {"merchant": "Livelo", "tam": "Amanda Lie Kaneko", "category": "Key maintenance", "revenue": 16985.0}, {"merchant": "Loft", "tam": "Sarah Figueiredo Brandao Santiago", "category": "Growth", "revenue": 1500.0}, {"merchant": "MaisTodos", "tam": "Sarah Figueiredo Brandao Santiago", "category": "Growth", "revenue": 2000.0}, {"merchant": "Meituan", "tam": "David Felipe Rios Robby", "category": "Strategic", "revenue": 0.0}, {"merchant": "Mercado Libre", "tam": "Carlos Andres Medina Rivas", "category": "Strategic", "revenue": 5000.0}, {"merchant": "MONNET Payment Solutions", "tam": "Katherine Lesmes", "category": "Strategic", "revenue": 21495.0}, {"merchant": "OficialFarma", "tam": "Amanda Lie Kaneko", "category": "Key maintenance", "revenue": 10035.0}, {"merchant": "Open English", "tam": "Katherine Lesmes", "category": "Key maintenance", "revenue": 5491.0}, {"merchant": "Pague Menos", "tam": "Amanda Lie Kaneko", "category": "Strategic", "revenue": 0.0}, {"merchant": "PayT", "tam": "Amanda Lie Kaneko", "category": "Key maintenance", "revenue": 15587.0}, {"merchant": "Perfectpay", "tam": "Sarah Figueiredo Brandao Santiago", "category": "Growth", "revenue": 11000.0}, {"merchant": "Petrobras Premmia", "tam": "Emanuel Graciano Guiraud", "category": "Strategic", "revenue": 30836.0}, {"merchant": "Petz", "tam": "Emanuel Graciano Guiraud", "category": "Key maintenance", "revenue": 12414.0}, {"merchant": "Privacy", "tam": "Pedro Scarapicchia Junior", "category": "Growth", "revenue": 8196.0}, {"merchant": "Q2 Ingressos", "tam": "Sarah Figueiredo Brandao Santiago", "category": "Growth", "revenue": 4539.0}, {"merchant": "Queima Diária", "tam": "Emanuel Graciano Guiraud", "category": "Growth", "revenue": 6975.0}, {"merchant": "R5", "tam": "David Felipe Rios Robby", "category": "Growth", "revenue": 10233.0}, {"merchant": "Rappi", "tam": "David Felipe Rios Robby", "category": "Strategic", "revenue": 91998.0}, {"merchant": "Rocket Lawyer", "tam": "Amanda Lie Kaneko", "category": "Growth", "revenue": 6825.0}, {"merchant": "Smart Fit", "tam": "Emanuel Graciano Guiraud", "category": "Strategic", "revenue": 5000.0}, {"merchant": "Smiles", "tam": "Katherine Lesmes", "category": "Growth", "revenue": 4193.0}, {"merchant": "Sorte Online", "tam": "Helio Cantelli", "category": "Key maintenance", "revenue": 6824.0}, {"merchant": "Tembici", "tam": "Sarah Figueiredo Brandao Santiago", "category": "Growth", "revenue": 9572.0}, {"merchant": "Univer Video", "tam": "Amanda Lie Kaneko", "category": "Growth", "revenue": 7108.0}, {"merchant": "UseReserva", "tam": "Amanda Lie Kaneko", "category": "Key maintenance", "revenue": 3301.0}, {"merchant": "Veloe", "tam": "Amanda Lie Kaneko", "category": "Key maintenance", "revenue": 26563.0}, {"merchant": "Viva Aerobus 2", "tam": "Deisy Paola Leal", "category": "Strategic", "revenue": 7462.0}, {"merchant": "Wingo", "tam": "Katherine Lesmes", "category": "Growth", "revenue": 6900.0}, {"merchant": "ZigFun", "tam": "Helio Cantelli", "category": "Key maintenance", "revenue": 7151.0}];
+const earlyOpps = [{"id": "006Hu00001beWteIAE", "name": "DPSP", "account": "Drogaria São Paulo", "stage": "5 - Contracting", "se": "Natan Castanhera Beraldi", "tar": 1860000.0}, {"id": "006Ps00000oSFgrIAG", "name": "ASSIST CARD", "account": "ASSIST CARD", "stage": "5 - Contracting", "se": "Joaquin Ginzo", "tar": 60000.0}, {"id": "006Ps00000e4vyLIAQ", "name": "Grupo Qualitas-", "account": "Grupo Qualitas", "stage": "5 - Contracting", "se": "Joaquin Ginzo", "tar": 150000.0}, {"id": "006Ps00000lDPLhIAO", "name": "Cobasi", "account": "Cobasi", "stage": "5 - Contracting", "se": "Natan Castanhera Beraldi", "tar": 500000.0}, {"id": "006Ps00000eLiVGIA0", "name": "ASUS Brasil", "account": "Asus", "stage": "5 - Contracting", "se": "Natan Castanhera Beraldi", "tar": 2000.0}, {"id": "006Ps00000YVhEnIAL", "name": "OLX-Brasil", "account": "OLX", "stage": "5 - Contracting", "se": "Natan Castanhera Beraldi", "tar": 330000.0}, {"id": "006Hu00001beWunIAE", "name": "Etraveli Group", "account": "Etraveli Group - Latam", "stage": "5 - Contracting", "se": "Natan Castanhera Beraldi", "tar": 400000.0}, {"id": "006Ps00000laJVhIAM", "name": "AVASA (Hertz)", "account": "AVASA", "stage": "5 - Contracting", "se": "Joaquin Ginzo", "tar": 125000.0}, {"id": "006Hu00001beWgjIAE", "name": "Leroy Merlin", "account": "Leroy Merlin", "stage": "5 - Contracting", "se": "Natan Castanhera Beraldi", "tar": 120000.0}, {"id": "006Ps00000blnSzIAI", "name": "Grupo Xcaret-", "account": "Grupo Xcaret", "stage": "5 - Contracting", "se": "Joaquin Ginzo", "tar": 60000.0}, {"id": "006Hu00001beWzFIAU", "name": "Madeira Madeira deal", "account": "Madeira Madeira", "stage": "5 - Contracting", "se": "Natan Castanhera Beraldi", "tar": 80000.0}, {"id": "006Ps00000LkbGbIAJ", "name": "Uber Technologies, Inc. - APMs RFP", "account": "Uber", "stage": "4 - Negotiation", "se": "Natan Castanhera Beraldi", "tar": 500000.0}, {"id": "006Ps00000rQw1pIAC", "name": "O Boticário", "account": "O Boticário", "stage": "4 - Negotiation", "se": "Natan Castanhera Beraldi", "tar": 2000000.0}, {"id": "006Ps00000fjhXRIAY", "name": "Outpayce from Amadeus", "account": "Outpayce from Amadeus", "stage": "4 - Negotiation", "se": "Caio Freitas", "tar": 852000.0}, {"id": "006Ps00000pqGjFIAU", "name": "Coppel- retail ecommerce", "account": "Coppel", "stage": "4 - Negotiation", "se": "Joaquin Ginzo", "tar": 1000000.0}, {"id": "006Hu00001bfXYbIAM", "name": "Amazon Brasil", "account": "Amazon", "stage": "4 - Negotiation", "se": "Natan Castanhera Beraldi", "tar": 15000000.0}, {"id": "006Ps00000nbOqMIAU", "name": "ConectCar", "account": "ConectCar Mobilidade Eletrônica S.A", "stage": "4 - Negotiation", "se": "Natan Castanhera Beraldi", "tar": 1500000.0}, {"id": "006Ps00000gsqcYIAQ", "name": "PPRO-", "account": "PPRO", "stage": "4 - Negotiation", "se": "Caio Freitas", "tar": 8500000.0}, {"id": "006Ps00000c7e2rIAA", "name": "Kaspersky-Global", "account": "Kaspersky", "stage": "4 - Negotiation", "se": "Joaquin Ginzo", "tar": 1000000.0}, {"id": "006Hu00001beWxbIAE", "name": "Gol Linhas Aereas + Smiles", "account": "Gol Linhas Aéreas", "stage": "4 - Negotiation", "se": "Natan Castanhera Beraldi", "tar": 630000.0}, {"id": "006Ps00000htmCyIAI", "name": "Whoosh-", "account": "Whoosh", "stage": "4 - Negotiation", "se": "Caio Freitas", "tar": 100000.0}, {"id": "006Ps00000bwbWXIAY", "name": "Fpay - Falabella", "account": "Falabella", "stage": "4 - Negotiation", "se": "Joaquin Ginzo", "tar": 0.0}, {"id": "006Ps00000ous91IAA", "name": "Zé Delivery-", "account": "Zé Delivery", "stage": "4 - Negotiation", "se": "Natan Castanhera Beraldi", "tar": 2800000.0}, {"id": "006Hu00001beWlZIAU", "name": "Magalu", "account": "Magazine Luiza", "stage": "4 - Negotiation", "se": "Natan Castanhera Beraldi", "tar": 3000000.0}, {"id": "006Hu00001beWfLIAU", "name": "Avell", "account": "Avell", "stage": "4 - Negotiation", "se": "Natan Castanhera Beraldi", "tar": 50000.0}, {"id": "006Ps00000PKhyTIAT", "name": "Azul Linhas Aéreas Brasileiras - New Merchant - 2025-03-31", "account": "Azul Linhas Aéreas", "stage": "4 - Negotiation", "se": "Natan Castanhera Beraldi", "tar": 2000000.0}, {"id": "006Ps00000iZKk6IAG", "name": "Prudential BR", "account": "Prudential", "stage": "4 - Negotiation", "se": "Natan Castanhera Beraldi", "tar": 1000000.0}, {"id": "006Ps00000YViZ3IAL", "name": "Decathlon-LATAM", "account": "Decathlon Global", "stage": "4 - Negotiation", "se": "Natan Castanhera Beraldi", "tar": 120000.0}, {"id": "006Ps00000nUhg1IAC", "name": "Align Technology", "account": "Align Technology", "stage": "4 - Negotiation", "se": "Natan Castanhera Beraldi", "tar": 50000.0}, {"id": "006Ps00000WZvU1IAL", "name": "PagBank", "account": "PagSeguro Internacional", "stage": "4 - Negotiation", "se": "Joaquin Ginzo", "tar": 100000.0}, {"id": "006Ps00000WZIIzIAP", "name": "Espaço Laser-", "account": "Espaço Laser", "stage": "4 - Negotiation", "se": "Natan Castanhera Beraldi", "tar": 1100000.0}, {"id": "006Ps00000p9pnfIAA", "name": "Elektra Go", "account": "Elektra Go", "stage": "4 - Negotiation", "se": "Joaquin Ginzo", "tar": 200000.0}, {"id": "006Ps00000YPbf7IAD", "name": "Whirlpool", "account": "Whirlpool", "stage": "4 - Negotiation", "se": "Natan Castanhera Beraldi", "tar": 80000.0}, {"id": "006Ps00000lRdDVIA0", "name": "Pagsmile-", "account": "Pagsmile", "stage": "4 - Negotiation", "se": "Caio Freitas", "tar": 200000.0}, {"id": "006Ps00000VkgdWIAR", "name": "ALLOS - New Merchant - 2025-06-30", "account": "ALLOS", "stage": "4 - Negotiation", "se": "Caio Freitas", "tar": 215000.0}, {"id": "006Ps00000gwVMcIAM", "name": "Bci Seguros", "account": "Bci Seguros", "stage": "4 - Negotiation", "se": "Joaquin Ginzo", "tar": 650000.0}, {"id": "006Ps00000LpHFeIAN", "name": "Grendene", "account": "Grendene", "stage": "4 - Negotiation", "se": "Natan Castanhera Beraldi", "tar": 50000.0}, {"id": "006Ps00000llpQvIAI", "name": "Buser-", "account": "Buser", "stage": "4 - Negotiation", "se": "Caio Freitas", "tar": 350000.0}, {"id": "006Hu00001beWkRIAU", "name": "Americanas.com", "account": "B2W / Americanas", "stage": "4 - Negotiation", "se": "Natan Castanhera Beraldi", "tar": 500000.0}, {"id": "006Ps00000SZ2I9IAL", "name": "Evino - New Merchant - 2025-10-16", "account": "Evino", "stage": "4 - Negotiation", "se": "Caio Freitas", "tar": 100000.0}, {"id": "006Ps00000mpfALIAY", "name": "Domino's Pizza Brasil-", "account": "Domino's Pizza Brasil", "stage": "4 - Negotiation", "se": "Caio Freitas", "tar": 120000.0}, {"id": "006Ps00000eU48nIAC", "name": "Turbi-", "account": "Turbi", "stage": "4 - Negotiation", "se": "Natan Castanhera Beraldi", "tar": 90000.0}, {"id": "006Hu00001beWyIIAU", "name": "Nuuvem", "account": "Nuuvem", "stage": "4 - Negotiation", "se": "Natan Castanhera Beraldi", "tar": 140000.0}, {"id": "006Ps00000YNpZJIA1", "name": "Motorola", "account": "Motorola", "stage": "4 - Negotiation", "se": "Natan Castanhera Beraldi", "tar": 10000.0}, {"id": "006Ps00000gtbd3IAA", "name": "Kigo - Parkimovil-", "account": "Kigo - Parkimovil", "stage": "4 - Negotiation", "se": "Joaquin Ginzo", "tar": 1500000.0}, {"id": "006Ps00000q5TD8IAM", "name": "Posthaus", "account": "Posthaus", "stage": "4 - Negotiation", "se": "Natan Castanhera Beraldi", "tar": 250000.0}, {"id": "006Ps00000p6XFFIA2", "name": "Magazord", "account": "Magazord", "stage": "4 - Negotiation", "se": "Natan Castanhera Beraldi", "tar": 600000.0}, {"id": "006Ps00000p9LxgIAE", "name": "WhiteBIT-", "account": "WhiteBIT", "stage": "4 - Negotiation", "se": "Unassigned", "tar": 1000000.0}, {"id": "006Ps00000gKzNJIA0", "name": "Mueve Ciudad-", "account": "Mueve Ciudad", "stage": "4 - Negotiation", "se": "Joaquin Ginzo", "tar": 370000.0}, {"id": "006Ps00000feo4xIAA", "name": "Baladapp (Ticketmaster)-", "account": "Baladapp", "stage": "4 - Negotiation", "se": "Natan Castanhera Beraldi", "tar": 60000.0}, {"id": "006Ps00000fvP6vIAE", "name": "Tur.com", "account": "Tur.com", "stage": "4 - Negotiation", "se": "Joaquin Ginzo", "tar": 110000.0}, {"id": "006Ps00000eB7K5IAK", "name": "RAZER Global", "account": "RAZER Global", "stage": "4 - Negotiation", "se": "Natan Castanhera Beraldi", "tar": 1000000.0}, {"id": "006Ps00000WpGzZIAV", "name": "RecargaPay", "account": "Recargapay", "stage": "4 - Negotiation", "se": "Natan Castanhera Beraldi", "tar": 2000000.0}, {"id": "006Ps00000of97NIAQ", "name": "Supercell-", "account": "Supercell", "stage": "4 - Negotiation", "se": "Caio Freitas", "tar": 5500000.0}, {"id": "006Ps00000pjjhxIAA", "name": "Bancoppel - POS Orchestration", "account": "Bancoppel", "stage": "3 - Demo/BP Product Deep Dive", "se": "Unassigned", "tar": 40000000.0}, {"id": "006Ps00000mnoODIAY", "name": "Serasa Experian / Pague Veloz", "account": "Serasa Experian / Pague Veloz", "stage": "3 - Demo/BP Product Deep Dive", "se": "Natan Castanhera Beraldi", "tar": 30000000.0}, {"id": "006Ps00000m8t6wIAA", "name": "Kushki-", "account": "Kushki", "stage": "3 - Demo/BP Product Deep Dive", "se": "Unassigned", "tar": 1000000.0}, {"id": "006Ps00000Yc2tFIAR", "name": "Dafiti", "account": "Dafiti", "stage": "3 - Demo/BP Product Deep Dive", "se": "Natan Castanhera Beraldi", "tar": 500000.0}, {"id": "006Ps00000oSBesIAG", "name": "Vivo (Telefônica Brasil)", "account": "Vivo", "stage": "3 - Demo/BP Product Deep Dive", "se": "Natan Castanhera Beraldi", "tar": 400000.0}, {"id": "006Ps00000feq9zIAA", "name": "TIM-", "account": "TIM", "stage": "3 - Demo/BP Product Deep Dive", "se": "Natan Castanhera Beraldi", "tar": 5500000.0}, {"id": "006Ps00000kfJDuIAM", "name": "Claro-EC", "account": "Claro", "stage": "3 - Demo/BP Product Deep Dive", "se": "Unassigned", "tar": 350000.0}, {"id": "006Ps00000cNrQjIAK", "name": "Ripley", "account": "Ripley", "stage": "3 - Demo/BP Product Deep Dive", "se": "Unassigned", "tar": 0.0}, {"id": "006Ps00000lglM1IAI", "name": "Oracle-", "account": "Oracle", "stage": "3 - Demo/BP Product Deep Dive", "se": "Unassigned", "tar": 5000000.0}, {"id": "006Ps00000k2GW1IAM", "name": "Cinépolis Latam 2026", "account": "Cinépolis", "stage": "3 - Demo/BP Product Deep Dive", "se": "Joaquin Ginzo", "tar": 2500000.0}, {"id": "006Ps00000htOXBIA2", "name": "PASE-", "account": "PASE", "stage": "3 - Demo/BP Product Deep Dive", "se": "Joaquin Ginzo", "tar": 1200000.0}, {"id": "006Ps00000WptHlIAJ", "name": "MAPFRE", "account": "MAPFRE", "stage": "3 - Demo/BP Product Deep Dive", "se": "Natan Castanhera Beraldi", "tar": 250000.0}, {"id": "006Ps00000fHfYbIAK", "name": "Esfera Fidelidade (Grupo Santander)-", "account": "Esfera Fidelidade (Grupo Santander)", "stage": "3 - Demo/BP Product Deep Dive", "se": "Natan Castanhera Beraldi", "tar": 100000.0}, {"id": "006Ps00000mRDvBIAW", "name": "Ri Happy", "account": "Ri Happy", "stage": "3 - Demo/BP Product Deep Dive", "se": "Natan Castanhera Beraldi", "tar": 200000.0}, {"id": "006Ps00000eDdyzIAC", "name": "PesaWay Services Limited-", "account": "PesaWay Services Limited", "stage": "3 - Demo/BP Product Deep Dive", "se": "Caio Freitas", "tar": 150000.0}, {"id": "006Ps00000lUsvxIAC", "name": "Ypf-", "account": "Ypf", "stage": "3 - Demo/BP Product Deep Dive", "se": "Joaquin Ginzo", "tar": 6000000.0}, {"id": "006Ps00000rOaAHIA0", "name": "T1 Pagos", "account": "T1", "stage": "3 - Demo/BP Product Deep Dive", "se": "Joaquin Ginzo", "tar": 200000.0}, {"id": "006Ps00000qSI0rIAG", "name": "Mobility ADO-", "account": "Mobility ADO", "stage": "3 - Demo/BP Product Deep Dive", "se": "Joaquin Ginzo", "tar": 700000.0}, {"id": "006Ps00000n9JwsIAE", "name": "Elektra-", "account": "Elektra", "stage": "3 - Demo/BP Product Deep Dive", "se": "Joaquin Ginzo", "tar": 600000.0}, {"id": "006Ps00000mDvWIIA0", "name": "Motta Internacional (iShop)", "account": "Motta Internacional", "stage": "3 - Demo/BP Product Deep Dive", "se": "Joaquin Ginzo", "tar": 100.0}, {"id": "006Ps00000leA0sIAE", "name": "Zimran-", "account": "Zimran", "stage": "3 - Demo/BP Product Deep Dive", "se": "Joaquin Ginzo", "tar": 500000.0}, {"id": "006Ps00000l8QVLIA2", "name": "Infracommerce-", "account": "Infracommerce", "stage": "3 - Demo/BP Product Deep Dive", "se": "Joaquin Ginzo", "tar": 500000.0}, {"id": "006Ps00000pybNWIAY", "name": "Sompo Seguros", "account": "Sompo Seguros", "stage": "3 - Demo/BP Product Deep Dive", "se": "Natan Castanhera Beraldi", "tar": 100000.0}, {"id": "006Ps00000neLXmIAM", "name": "SumUp", "account": "SumUp", "stage": "3 - Demo/BP Product Deep Dive", "se": "Natan Castanhera Beraldi", "tar": 250000.0}, {"id": "006Ps00000lDNwbIAG", "name": "Sympla", "account": "Sympla", "stage": "3 - Demo/BP Product Deep Dive", "se": "Natan Castanhera Beraldi", "tar": 50000.0}, {"id": "006Ps00000byq3FIAQ", "name": "WebContinental", "account": "WebContinental", "stage": "3 - Demo/BP Product Deep Dive", "se": "Natan Castanhera Beraldi", "tar": 120000.0}, {"id": "006Ps00000YPMkvIAH", "name": "Lojas Renner", "account": "Lojas Renner", "stage": "3 - Demo/BP Product Deep Dive", "se": "Natan Castanhera Beraldi", "tar": 1000000.0}, {"id": "006Ps00000Mgd6kIAB", "name": "casa&video - New Merchant - 2025-06-30", "account": "casa&video", "stage": "3 - Demo/BP Product Deep Dive", "se": "Natan Castanhera Beraldi", "tar": 200000.0}, {"id": "006Ps00000nbwqPIAQ", "name": "Shopee-", "account": "Shopee", "stage": "3 - Demo/BP Product Deep Dive", "se": "Natan Castanhera Beraldi", "tar": 500000.0}, {"id": "006Ps00000Sz8QLIAZ", "name": "Latam Airlines - Latam Pass", "account": "LATAM Airlines", "stage": "3 - Demo/BP Product Deep Dive", "se": "Natan Castanhera Beraldi", "tar": 2000000.0}, {"id": "006Ps00000niH8zIAE", "name": "99-", "account": "99.0", "stage": "3 - Demo/BP Product Deep Dive", "se": "Max Li", "tar": 50000000.0}, {"id": "006Ps00000ktJdpIAE", "name": "Indigo Group", "account": "Indigo Group", "stage": "3 - Demo/BP Product Deep Dive", "se": "Unassigned", "tar": 1000000.0}, {"id": "006Ps00000hHy2EIAS", "name": "Alaska Airlines & Hawaiian Airlines", "account": "Alaska Airlines", "stage": "3 - Demo/BP Product Deep Dive", "se": "Unassigned", "tar": 1000000.0}, {"id": "006Ps00000oleTRIAY", "name": "Ticketera®-", "account": "Ticketera", "stage": "3 - Demo/BP Product Deep Dive", "se": "Unassigned", "tar": 90000.0}, {"id": "006Ps00000n1fpiIAA", "name": "Paysafe-", "account": "Paysafe", "stage": "3 - Demo/BP Product Deep Dive", "se": "Unassigned", "tar": 100000.0}, {"id": "006Ps00000b4ZJdIAM", "name": "IPSY-", "account": "IPSY", "stage": "3 - Demo/BP Product Deep Dive", "se": "Unassigned", "tar": 850000.0}, {"id": "006Hu00001beWqyIAE", "name": "Codashop", "account": "Codashop", "stage": "3 - Demo/BP Product Deep Dive", "se": "Unassigned", "tar": 300000.0}, {"id": "006Ps00000k370rIAA", "name": "Apple 2026", "account": "Apple", "stage": "3 - Demo/BP Product Deep Dive", "se": "Unassigned", "tar": 100000.0}, {"id": "006Ps00000gURvSIAW", "name": "Bitel / BiPay", "account": "Bitel", "stage": "3 - Demo/BP Product Deep Dive", "se": "Unassigned", "tar": 2000000.0}, {"id": "006Ps00000PuldmIAB", "name": "We Pink - New Merchant - 2025-03-31", "account": "We Pink", "stage": "3 - Demo/BP Product Deep Dive", "se": "Natan Castanhera Beraldi", "tar": 450000.0}, {"id": "006Ps00000XZFlxIAH", "name": "Bren", "account": "Bren", "stage": "3 - Demo/BP Product Deep Dive", "se": "Unassigned", "tar": 100000.0}, {"id": "006Ps00000rMGqnIAG", "name": "Bamboo Payment Systems-", "account": "Bamboo Payment Systems", "stage": "3 - Demo/BP Product Deep Dive", "se": "Unassigned", "tar": 1000000.0}, {"id": "006Ps00000qglZFIAY", "name": "Paymend-", "account": "Paymend", "stage": "3 - Demo/BP Product Deep Dive", "se": "Natan Castanhera Beraldi", "tar": 2000000.0}, {"id": "006Ps00000qeu0jIAA", "name": "Vulcabras-", "account": "Vulcabras", "stage": "3 - Demo/BP Product Deep Dive", "se": "Natan Castanhera Beraldi", "tar": 400000.0}, {"id": "006Ps00000kJAE5IAO", "name": "Pandora", "account": "Pandora", "stage": "1 - Discovery", "se": "Unassigned", "tar": 0}, {"id": "006Ps00000hwA33IAE", "name": "Expedia Group", "account": "Expedia Group", "stage": "1 - Discovery", "se": "Unassigned", "tar": 0}, {"id": "006Ps00000m9OlpIAE", "name": "Iguatemi S.A (One + 365)", "account": "Iguatemi S.A.", "stage": "1 - Discovery", "se": "Unassigned", "tar": 0}, {"id": "006Ps00000qDn6cIAC", "name": "Telcel-", "account": "Telcel", "stage": "1 - Discovery", "se": "Joaquin Ginzo", "tar": 5000000.0}, {"id": "006Ps00000sN8SPIA0", "name": "Intelbras", "account": "Intelbras", "stage": "1 - Discovery", "se": "Natan Castanhera Beraldi", "tar": 100000.0}, {"id": "006Ps00000q66O9IAI", "name": "Delivery Much Brasil", "account": "Delivery Much Brasil", "stage": "1 - Discovery", "se": "Natan Castanhera Beraldi", "tar": 500000.0}, {"id": "006Ps00000orEPqIAM", "name": "C&A Brasil", "account": "C&A Brasil", "stage": "1 - Discovery", "se": "Natan Castanhera Beraldi", "tar": 500000.0}, {"id": "006Ps00000oSpnZIAS", "name": "Xsolla", "account": "Xsolla", "stage": "1 - Discovery", "se": "Natan Castanhera Beraldi", "tar": 0}, {"id": "006Ps00000t7FHBIA2", "name": "Playtomic", "account": "Playtomic", "stage": "1 - Discovery", "se": "Unassigned", "tar": 200000.0}, {"id": "006Ps00000swI3tIAE", "name": "Britânia", "account": "Britânia", "stage": "1 - Discovery", "se": "Unassigned", "tar": 10000.0}, {"id": "006Ps00000sB3gDIAS", "name": "Motiva", "account": "MOTIVA CONTACT CENTER", "stage": "1 - Discovery", "se": "Unassigned", "tar": 5000000.0}, {"id": "006Ps00000s1jonIAA", "name": "Arko Network", "account": "Arko Network", "stage": "1 - Discovery", "se": "Unassigned", "tar": 100000.0}, {"id": "006Ps00000rzUQrIAM", "name": "Universidade Cruzeiro do Sul", "account": "Universidade Cruzeiro do Sul", "stage": "1 - Discovery", "se": "Unassigned", "tar": 250000.0}, {"id": "006Ps00000rz8N7IAI", "name": "Grubhub", "account": "Grubhub", "stage": "1 - Discovery", "se": "Unassigned", "tar": 1500000.0}, {"id": "006Ps00000q5WanIAE", "name": "LIVE!", "account": "LIVE!", "stage": "1 - Discovery", "se": "Unassigned", "tar": 100000.0}, {"id": "006Ps00000q0JPhIAM", "name": "Peach Payments", "account": "Peach Payments", "stage": "1 - Discovery", "se": "Unassigned", "tar": 250000.0}, {"id": "006Ps00000p6aOPIAY", "name": "HW Publishing", "account": "HW Publishing", "stage": "1 - Discovery", "se": "Unassigned", "tar": 150000.0}, {"id": "006Ps00000oRCujIAG", "name": "MetLife", "account": "MetLife", "stage": "1 - Discovery", "se": "Unassigned", "tar": 50000.0}, {"id": "006Ps00000emcGsIAI", "name": "Teemopay", "account": "Teemopay", "stage": "1 - Discovery", "se": "Unassigned", "tar": 8500.0}, {"id": "006Hu00001bfUPbIAM", "name": "Sony Playstation (PSN)", "account": "Sony Group", "stage": "1 - Discovery", "se": "Unassigned", "tar": 0}, {"id": "006Ps00000ktESsIAM", "name": "DolarApp-", "account": "DolarApp", "stage": "1 - Discovery", "se": "Unassigned", "tar": 500000.0}, {"id": "006Ps00000htScPIAU", "name": "Home Depot MX - 2025/2026", "account": "The Home Depot", "stage": "1 - Discovery", "se": "Joaquin Ginzo", "tar": 0}, {"id": "006Ps00000MggNxIAJ", "name": "vivara - New Merchant - 2025-04-30", "account": "Vivara", "stage": "1 - Discovery", "se": "Natan Castanhera Beraldi", "tar": 0}, {"id": "006Ps00000XY7wxIAD", "name": "Farfetch - Latam", "account": "Farfetch", "stage": "1 - Discovery", "se": "Unassigned", "tar": 120000.0}, {"id": "006Ps00000Li8U1IAJ", "name": "Google - LATAM", "account": "Google", "stage": "1 - Discovery", "se": "Unassigned", "tar": 1000000.0}, {"id": "006Hu00001bfUQ5IAM", "name": "Activision Blizzard (Battle.net)", "account": "Activision Blizzard", "stage": "1 - Discovery", "se": "Unassigned", "tar": 0}, {"id": "006Ps00000sqEEJIA2", "name": "América Móvil", "account": "AMCO (America Movil)", "stage": "1 - Discovery", "se": "Joaquin Ginzo", "tar": 0}, {"id": "006Ps00000nbfPmIAI", "name": "Bilheteria Digital", "account": "Bilheteria Digital", "stage": "1 - Discovery", "se": "Natan Castanhera Beraldi", "tar": 0}, {"id": "006Ps00000s9RzaIAE", "name": "Viajes el Corte Inglés.-", "account": "El Corte Ingles - Viajes", "stage": "1 - Discovery", "se": "Unassigned", "tar": 100000.0}, {"id": "006Ps00000qT6yZIAS", "name": "Directv-", "account": "Directv", "stage": "1 - Discovery", "se": "Unassigned", "tar": 140000.0}, {"id": "006Ps00000pABw8IAG", "name": "Experian-", "account": "Experian", "stage": "1 - Discovery", "se": "Unassigned", "tar": 1000000.0}, {"id": "006Ps00000oSuthIAC", "name": "WOM-", "account": "WOM", "stage": "1 - Discovery", "se": "Unassigned", "tar": 0}, {"id": "006Ps00000mfxwYIAQ", "name": "Wellhub", "account": "Wellhub", "stage": "1 - Discovery", "se": "Unassigned", "tar": 0}, {"id": "006Ps00000kfifJIAQ", "name": "Horizon Bank", "account": "Horizon Bank", "stage": "1 - Discovery", "se": "Unassigned", "tar": 0}, {"id": "006Ps00000iWDonIAG", "name": "Temu-", "account": "Temu", "stage": "1 - Discovery", "se": "Unassigned", "tar": 100000000.0}, {"id": "006Ps00000qwpCKIAY", "name": "Multiva-", "account": "Multiva", "stage": "1 - Discovery", "se": "Unassigned", "tar": 0}, {"id": "006Ps00000mHYeLIAW", "name": "Mancard.io", "account": "Maincard.io", "stage": "0 - Meeting Booked", "se": "Unassigned", "tar": 0}, {"id": "006Ps00000gzFbRIAU", "name": "App Daki", "account": "App Daki", "stage": "0 - Meeting Booked", "se": "Unassigned", "tar": 0}, {"id": "006Ps00000gvX0fIAE", "name": "Grupo Fleury", "account": "Grupo Fleury", "stage": "0 - Meeting Booked", "se": "Unassigned", "tar": 0}, {"id": "006Ps00000gvTLFIA2", "name": "Tupperware Brasil", "account": "Tupperware", "stage": "0 - Meeting Booked", "se": "Unassigned", "tar": 0}, {"id": "006Ps00000gvN9OIAU", "name": "Beep Saude", "account": "Beep Saude", "stage": "0 - Meeting Booked", "se": "Unassigned", "tar": 0}, {"id": "006Ps00000Lcwi1IAB", "name": "Pura Vida Nestlé - New Merchant - 2025-07-31", "account": "Pura Vida Nestlé", "stage": "0 - Meeting Booked", "se": "Unassigned", "tar": 0}, {"id": "006Hu00001beWqaIAE", "name": "Descomplica", "account": "Descomplica", "stage": "0 - Meeting Booked", "se": "Unassigned", "tar": 0}, {"id": "006Ps00000qsNRVIA2", "name": "T1-Payments", "account": "T1Pagos", "stage": "0 - Meeting Booked", "se": "Unassigned", "tar": 0}, {"id": "006Ps00000oSFQkIAO", "name": "PVS LATAM-", "account": "PVS LATAM", "stage": "0 - Meeting Booked", "se": "Unassigned", "tar": 1500000.0}, {"id": "006Ps00000pb51lIAA", "name": "Centauro", "account": "Centauro", "stage": "0 - Meeting Booked", "se": "Unassigned", "tar": 0}, {"id": "006Ps00000rzmkLIAQ", "name": "Ana Gaming-", "account": "Ana Gaming", "stage": "0 - Meeting Booked", "se": "Unassigned", "tar": 0}, {"id": "006Ps00000pK1sEIAS", "name": "Pandora-", "account": "Pandora", "stage": "0 - Meeting Booked", "se": "Unassigned", "tar": 0}, {"id": "006Ps00000iR2KXIA0", "name": "PixNow-", "account": "PixNow", "stage": "0 - Meeting Booked", "se": "Unassigned", "tar": 0}, {"id": "006Ps00000kHqFpIAK", "name": "El Palacio de Hierro 2026", "account": "Palacio de Hierro", "stage": "0 - Meeting Booked", "se": "Unassigned", "tar": 0}, {"id": "006Ps00000kHYSbIAO", "name": "SURA 2026", "account": "Sura", "stage": "0 - Meeting Booked", "se": "Unassigned", "tar": 0}, {"id": "006Ps00000kGSvWIAW", "name": "Belcorp 2026", "account": "Belcorp", "stage": "0 - Meeting Booked", "se": "Unassigned", "tar": 0}, {"id": "006Ps00000kGQx3IAG", "name": "Cinemex", "account": "Cinemex", "stage": "0 - Meeting Booked", "se": "Unassigned", "tar": 0}, {"id": "006Ps00000kGLsPIAW", "name": "LEGO", "account": "LEGO", "stage": "0 - Meeting Booked", "se": "Unassigned", "tar": 0}, {"id": "006Ps00000k3C3lIAE", "name": "Grupo Gigante (Petco)", "account": "Petco", "stage": "0 - Meeting Booked", "se": "Unassigned", "tar": 0}, {"id": "006Ps00000k2yglIAA", "name": "Farmacias del Ahorro 2026", "account": "Farmacias del Ahorro", "stage": "0 - Meeting Booked", "se": "Unassigned", "tar": 0}, {"id": "006Ps00000sxGXvIAM", "name": "Scotiabank Global Acquiring", "account": "Scotiabank", "stage": "0 - Meeting Booked", "se": "Unassigned", "tar": 0}];
+const contractOpps = [{"id": "006Ps00000hHSOvIAO", "name": "Crypto.com-", "account": "Crypto.com", "se": "Jarret Falasco", "tar": 1173744.72}, {"id": "006Ps00000XYPnNIAX", "name": "Ser Educacional-", "account": "Ser Educacional", "se": "Pedro Scarapicchia Junior", "tar": 513747.816}, {"id": "006Ps00000qf5H7IAI", "name": "Klip-", "account": "Klip", "se": "Pedro Scarapicchia Junior", "tar": 285599.16}, {"id": "006Ps00000MAaf3IAD", "name": "Privalia - New Merchant - 2025-03-31", "account": "Privalia", "se": "Carlos Andres Medina Rivas", "tar": 276000.0}, {"id": "006Ps00000ggqoPIAQ", "name": "TicketSocket", "account": "Ticket Socket", "se": "Joaquin Ginzo", "tar": 264000.0}, {"id": "006Hu00001beWn2IAE", "name": "Samsung Brasil", "account": "Samsung", "se": "Helio Cantelli", "tar": 222660.0}, {"id": "006Ps00000bNM90IAG", "name": "JBL / Harman", "account": "JBL", "se": "Helio Cantelli", "tar": 173999.28}, {"id": "006Hu00001beWu9IAE", "name": "Icatu Seguro", "account": "Icatu Seguros", "se": "Helio Cantelli", "tar": 120000.0}, {"id": "006Ps00000L1x0LIAR", "name": "a55 - New Merchant - 2025-03-31", "account": "a55 tech", "se": "Helio Cantelli", "tar": 120000.0}, {"id": "006Hu00001beWmwIAE", "name": "Privacy.com.br", "account": "Privacy", "se": "Pedro Scarapicchia Junior", "tar": 107073.6}, {"id": "006Ps00000cT3xWIAS", "name": "LastLink-", "account": "Lastlink", "se": "Pedro Scarapicchia Junior", "tar": 93639.328}, {"id": "006Ps00000MDABNIA5", "name": "Lottoland - New Merchant - 2025-05-30", "account": "Lottoland", "se": "Unassigned", "tar": 93120.0}, {"id": "006Ps00000Y4GsDIAV", "name": "Grovity", "account": "Grovity", "se": "Unassigned", "tar": 92399.56}, {"id": "006Ps00000mEZiDIAW", "name": "Dalefon-", "account": "Dalefon", "se": "Carlos Andres Medina Rivas", "tar": 83000.0}, {"id": "006Ps00000XFcA1IAL", "name": "Bonoxs-", "account": "Bonoxs", "se": "Caio Freitas", "tar": 74599.58}, {"id": "006Hu00001beWmSIAU", "name": "Wine.com", "account": "Wine.com", "se": "Pedro Scarapicchia Junior", "tar": 72600.0}, {"id": "006Ps00000QD5cQIAT", "name": "CVC", "account": "CVC", "se": "Pedro Scarapicchia Junior", "tar": 69839.328}, {"id": "006Ps00000XXRG9IAP", "name": "Águia Branca", "account": "Águia Branca", "se": "Pedro Scarapicchia Junior", "tar": 65952.0}];
+const contractSignedAccounts = [{"merchant": "Aguia Branca", "tam": "Pedro Scarapicchia Junior", "category": "Growth", "revenue": 1300.0, "status": "Contract Signed"}, {"merchant": "Bonoxs", "tam": "Helio Cantelli", "category": "Growth", "revenue": 6600.0, "status": "Contract Signed"}, {"merchant": "CVC", "tam": "Pedro Scarapicchia Junior", "category": "Growth", "revenue": 5500.0, "status": "Contract Signed"}, {"merchant": "Electrolux", "tam": "Helio Cantelli", "category": "Growth", "revenue": 0.0, "status": "Contract Signed"}, {"merchant": "Flypass", "tam": "Carlos Andres Medina Rivas", "category": "Growth", "revenue": 5000.0, "status": "Contract Signed"}, {"merchant": "JBL", "tam": "Helio Cantelli", "category": "Growth", "revenue": 0, "status": "Contract Signed"}, {"merchant": "Kushki", "tam": "Carlos Andres Medina Rivas", "category": "Growth", "revenue": 6750.0, "status": "Contract Signed"}, {"merchant": "LastLink", "tam": "Pedro Scarapicchia Junior", "category": "Growth", "revenue": 8020.0, "status": "Contract Signed"}, {"merchant": "Privalia", "tam": "Carlos Andres Medina Rivas", "category": "Growth", "revenue": 4575.0, "status": "Contract Signed"}, {"merchant": "Pronto Paga", "tam": "Carlos Andres Medina Rivas", "category": "Growth", "revenue": 2040.0, "status": "Contract Signed"}, {"merchant": "Rhino", "tam": "Pedro Scarapicchia Junior", "category": "Growth", "revenue": 8100.0, "status": "Contract Signed"}, {"merchant": "Samsung", "tam": "Helio Cantelli", "category": "Strategic", "revenue": 0.0, "status": "Contract Signed"}, {"merchant": "Ser Educacional", "tam": "Pedro Scarapicchia Junior", "category": "Growth", "revenue": 0, "status": "Contract Signed"}, {"merchant": "Icatu Seguros", "tam": "Helio Cantelli", "category": "Unknown", "revenue": 0, "status": "Contract Signed"}, {"merchant": "a55 tech", "tam": "Helio Cantelli", "category": "Unknown", "revenue": 0, "status": "Contract Signed"}, {"merchant": "Dalefon", "tam": "Carlos Andres Medina Rivas", "category": "Unknown", "revenue": 0, "status": "Contract Signed"}, {"merchant": "Wine.com", "tam": "Pedro Scarapicchia Junior", "category": "Unknown", "revenue": 0, "status": "Contract Signed"}, {"merchant": "Klip", "tam": "Pedro Scarapicchia Junior", "category": "Unknown", "revenue": 0, "status": "Contract Signed"}];
+
+// Contratos fechados por SE (Sales Engineer field from Opps in Contract Signed Stage)
+const contractsBySE = {"Caio Freitas": ["Crypto.com", "Ser Educacional", "Lastlink"], "Joaquin Ginzo": ["Klip", "Ticket Socket", "Grovity", "Dalefon"], "Natan Castanhera Beraldi": ["Privalia", "Samsung", "JBL", "Icatu Seguros", "a55 tech", "Privacy", "Lottoland", "Wine.com", "CVC", "\u00c1gua Branca"], "Lucca Zadra": ["Bonoxs"]};
+
+// ===================== UTILS =====================
+function initials(name) {
+  return name.split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase();
+}
+
+function formatRevenue(v) {
+  if (v >= 1000000) return '$' + (v/1000000).toFixed(1) + 'M';
+  if (v >= 1000) return '$' + (v/1000).toFixed(0) + 'k';
+  return '$' + v.toFixed(0);
+}
+
+function formatTAR(v) {
+  if (v >= 1000000) return '$' + (v/1000000).toFixed(1) + 'M';
+  if (v >= 1000) return '$' + (v/1000).toFixed(0) + 'k';
+  return '$' + v.toFixed(0);
+}
+
+function categoryBadge(cat) {
+  const map = {
+    'Strategic': 'badge-strategic',
+    'Growth': 'badge-growth',
+    'Key maintenance': 'badge-keymaint',
+    'Long tail': 'badge-longtail'
+  };
+  const cls = map[cat] || 'badge-unknown';
+  return `<span class="badge ${cls}">${cat}</span>`;
+}
+
+function stageColor(stage) {
+  const map = {
+    '0 - Meeting Booked': '#8B89A8',
+    '1 - Discovery': '#4DAAFF',
+    '3 - Demo/BP Product Deep Dive': '#6C47FF',
+    '4 - Negotiation': '#FFD166',
+    '5 - Contracting': '#00D68F',
+    'Contract Signed': '#00B577',
+  };
+  return map[stage] || '#6C47FF';
+}
+
+const COLORS = ['#6C47FF','#00D68F','#FF8C42','#4DAAFF','#FFD166','#FF4D6A','#A88BFF','#00B577','#FF6B9D','#88CCFF'];
+
+// ===================== AGGREGATIONS =====================
+
+// TAM → accounts
+const tamMap = {};
+liveAccounts.forEach(a => {
+  if (!tamMap[a.tam]) tamMap[a.tam] = { accounts: [], revenue: 0, categories: {} };
+  tamMap[a.tam].accounts.push(a);
+  tamMap[a.tam].revenue += a.revenue;
+  tamMap[a.tam].categories[a.category] = (tamMap[a.tam].categories[a.category] || 0) + 1;
+});
+
+const EXCLUDE_PEOPLE = ['Max Li', 'Jarret Falasco', 'Andyara Pedrosa', 'Unassigned', 'TBC'];
+
+// SE → early opps
+const seMapEarly = {};
+earlyOpps.forEach(o => {
+  const se = o.se || 'Unassigned';
+  if (!seMapEarly[se]) seMapEarly[se] = { opps: [], tar: 0 };
+  seMapEarly[se].opps.push(o);
+  seMapEarly[se].tar += o.tar;
+});
+
+// SE → contract signed
+const seMapContract = {};
+contractOpps.forEach(o => {
+  const se = o.se || 'Unassigned';
+  if (!seMapContract[se]) seMapContract[se] = { opps: [], tar: 0 };
+  seMapContract[se].opps.push(o);
+  seMapContract[se].tar += o.tar;
+});
+
+// Category counts
+const catCounts = {};
+liveAccounts.forEach(a => {
+  catCounts[a.category] = (catCounts[a.category] || 0) + 1;
+});
+
+// Stage counts
+const stageCounts = {};
+earlyOpps.forEach(o => {
+  stageCounts[o.stage] = (stageCounts[o.stage] || 0) + 1;
+});
+
+// Total TAR
+const totalTar = earlyOpps.reduce((s,o) => s+o.tar, 0) + contractOpps.reduce((s,o) => s+o.tar, 0);
+const unassignedCount = (seMapEarly['Unassigned']?.opps.length || 0);
+
+// ===================== KPIs =====================
+document.getElementById('kpi-live').textContent = liveAccounts.length;
+const imsTams = ['Pedro Scarapicchia Junior', 'Carlos Andres Medina Rivas', 'Helio Cantelli'];
+const excludeTams = [...imsTams, 'TBC', 'Andyara Pedrosa'];
+const tamCount = Object.keys(tamMap).filter(t => !excludeTams.includes(t)).length;
+document.getElementById('kpi-tams').textContent = tamCount;
+document.getElementById('kpi-opps').textContent = earlyOpps.length;
+document.getElementById('kpi-unassigned').textContent = unassignedCount;
+document.getElementById('kpi-tar').textContent = formatTAR(totalTar);
+
+document.getElementById('kpi-p-early').textContent = earlyOpps.length;
+document.getElementById('kpi-p-contract').textContent = contractOpps.length;
+document.getElementById('kpi-p-unassigned').textContent = unassignedCount;
+
+document.getElementById('alert-unassigned').innerHTML =
+  `⚠️ <strong>${unassignedCount} Early Stage opportunities</strong> have no SE Engineer assigned (Total TAR: ${formatTAR(seMapEarly['Unassigned']?.tar || 0)}). Attention: review capacity distribution.`;
+
+// ===================== CHARTS =====================
+Chart.defaults.color = '#8B89A8';
+Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+
+// TAM accounts chart (stacked: LIVE + Contract Signed)
+const csMapTam = {};
+contractSignedAccounts.forEach(a => {
+  if (!csMapTam[a.tam]) csMapTam[a.tam] = { accounts: [], revenue: 0 };
+  csMapTam[a.tam].accounts.push(a);
+  csMapTam[a.tam].revenue += a.revenue;
+});
+
+// Sort by total (live + cs)
+const tamNames = Object.keys(tamMap).filter(t => t !== 'TBC' && t !== 'Andyara Pedrosa').sort((a,b) => {
+  const aTotal = tamMap[a].accounts.length + (csMapTam[a]?.accounts.length || 0);
+  const bTotal = tamMap[b].accounts.length + (csMapTam[b]?.accounts.length || 0);
+  return bTotal - aTotal;
+});
+
+new Chart(document.getElementById('chart-tam-accounts'), {
+  type: 'bar',
+  data: {
+    labels: tamNames.map(t => t.split(' ')[0]),
+    datasets: [
+      {
+        label: 'LIVE Accounts',
+        data: tamNames.map(t => tamMap[t].accounts.length),
+        backgroundColor: tamNames.map((t,i) => COLORS[i % COLORS.length] + 'DD'),
+        borderRadius: [0, 0, 6, 6],
+        borderSkipped: false,
+        stack: 'tam',
+      },
+      {
+        label: 'Contract Signed',
+        data: tamNames.map(t => csMapTam[t]?.accounts.length || 0),
+        backgroundColor: tamNames.map((t,i) => {
+          if (!csMapTam[t]) return 'transparent';
+          return COLORS[i % COLORS.length] + '55';
+        }),
+        borderColor: tamNames.map((t,i) => csMapTam[t] ? COLORS[i % COLORS.length] : 'transparent'),
+        borderWidth: tamNames.map(t => csMapTam[t] ? 1.5 : 0),
+        borderDash: [4, 3],
+        borderRadius: [6, 6, 0, 0],
+        borderSkipped: false,
+        stack: 'tam',
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: true,
+        position: 'top',
+        labels: { font: { size: 11 }, padding: 12, boxWidth: 12 }
+      },
+      tooltip: {
+        callbacks: {
+          title: (items) => {
+            const tam = tamNames[items[0].dataIndex];
+            const live = tamMap[tam]?.accounts.length || 0;
+            const cs = csMapTam[tam]?.accounts.length || 0;
+            return `${tam} — ${live + cs} accounts`;
+          },
+          label: () => null,
+          afterBody: (items) => {
+            const tam = tamNames[items[0].dataIndex];
+            const lines = [];
+            const liveAccs = tamMap[tam]?.accounts || [];
+            const csAccs = csMapTam[tam]?.accounts || [];
+            if (liveAccs.length > 0) {
+              lines.push('── LIVE ──');
+              liveAccs.forEach(a => lines.push(`  · ${a.merchant}${a.revenue > 0 ? '  ' + formatRevenue(a.revenue) : ''}`));
+            }
+            if (csAccs.length > 0) {
+              lines.push('── Contract Signed ──');
+              csAccs.forEach(a => lines.push(`  · ${a.merchant}${a.revenue > 0 ? '  ' + formatRevenue(a.revenue) : ''}`));
+            }
+            return lines;
+          }
+        },
+        padding: 12,
+        boxPadding: 4,
+      }
+    },
+    scales: {
+      x: { grid: { color: 'rgba(42,42,74,0.5)' }, ticks: { font: { size: 11 } }, stacked: true },
+      y: { grid: { color: 'rgba(42,42,74,0.5)' }, beginAtZero: true, ticks: { stepSize: 1 }, stacked: true }
+    }
+  }
+});
+
+// Category donut
+const catKeys = Object.keys(catCounts);
+const catColors = { 'Strategic': '#6C47FF', 'Growth': '#00D68F', 'Key maintenance': '#FFD166', 'Long tail': '#4DAAFF' };
+new Chart(document.getElementById('chart-category'), {
+  type: 'doughnut',
+  data: {
+    labels: catKeys,
+    datasets: [{
+      data: catKeys.map(k => catCounts[k]),
+      backgroundColor: catKeys.map(k => catColors[k] || '#8B89A8'),
+      borderWidth: 2,
+      borderColor: '#1A1A30',
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'right', labels: { font: { size: 12 }, padding: 16, boxWidth: 12 } }
+    },
+    cutout: '62%',
+  }
+});
+
+// SE Opps chart
+const seNames = Object.keys(seMapEarly).filter(s => !EXCLUDE_PEOPLE.includes(s)).sort((a,b)=>seMapEarly[b].opps.length - seMapEarly[a].opps.length);
+const seNamesAll = [...seNames, 'Unassigned'];
+new Chart(document.getElementById('chart-se-opps'), {
+  type: 'bar',
+  data: {
+    labels: seNamesAll.map(s => s === 'Unassigned' ? 'No SE' : s.split(' ')[0]),
+    datasets: [{
+      label: 'Oportunidades',
+      data: seNamesAll.map(s => seMapEarly[s]?.opps.length || 0),
+      backgroundColor: seNamesAll.map((s,i) => s === 'Unassigned' ? '#FF4D6A' : COLORS[i % COLORS.length]),
+      borderRadius: 6,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: 'rgba(42,42,74,0.5)' }, ticks: { font: { size: 11 } } },
+      y: { grid: { color: 'rgba(42,42,74,0.5)' }, beginAtZero: true, ticks: { stepSize: 5 } }
+    }
+  }
+});
+
+// Stages chart
+const stageOrder = ['0 - Meeting Booked','1 - Discovery','3 - Demo/BP Product Deep Dive','4 - Negotiation','5 - Contracting'];
+new Chart(document.getElementById('chart-stages'), {
+  type: 'bar',
+  data: {
+    labels: stageOrder.map(s => s.replace(/^\d+ - /,'')),
+    datasets: [{
+      label: 'Opps',
+      data: stageOrder.map(s => stageCounts[s] || 0),
+      backgroundColor: stageOrder.map(s => stageColor(s)),
+      borderRadius: 6,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          title: (items) => {
+            const stage = stageOrder[items[0].dataIndex];
+            return `${stage.replace(/^\d+ - /,'')} (${stageCounts[stage] || 0})`;
+          },
+          label: () => null,
+          afterBody: (items) => {
+            const stage = stageOrder[items[0].dataIndex];
+            return earlyOpps
+              .filter(o => o.stage === stage)
+              .map(o => `  · ${o.account || o.name}${o.se && o.se !== 'Unassigned' ? '  — ' + o.se.split(' ')[0] : '  — No SE'}`);
+          }
+        },
+        padding: 12,
+      }
+    },
+    scales: {
+      x: { grid: { color: 'rgba(42,42,74,0.5)' }, beginAtZero: true },
+      y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+    }
+  }
+});
+
+// ===================== TAM TABLE =====================
+const tamTbody = document.getElementById('tam-tbody');
+const sorted = [...liveAccounts].sort((a,b) => {
+  if (a.tam < b.tam) return -1;
+  if (a.tam > b.tam) return 1;
+  return b.revenue - a.revenue;
+});
+sorted.forEach(a => {
+  const tr = document.createElement('tr');
+  tr.dataset.merchant = a.merchant.toLowerCase();
+  tr.dataset.tam = a.tam.toLowerCase();
+  tr.dataset.tamFull = a.tam;
+  tr.dataset.category = a.category;
+  tr.dataset.revenue = a.revenue;
+  tr.innerHTML = `
+    <td class="fw-bold">${a.merchant}</td>
+    <td>${a.tam}</td>
+    <td>${categoryBadge(a.category)}</td>
+    <td class="text-green">${a.revenue > 0 ? formatRevenue(a.revenue) : '<span class="text-muted">—</span>'}</td>
+  `;
+  tamTbody.appendChild(tr);
+});
+
+// Populate TAM filter
+const tamSelect = document.getElementById('f-tam');
+const uniqueTams = [...new Set(liveAccounts.map(a => a.tam))].sort();
+uniqueTams.forEach(t => {
+  const opt = document.createElement('option');
+  opt.value = t;
+  opt.textContent = t;
+  tamSelect.appendChild(opt);
+});
+
+function filterTamTable() {
+  const merchant = document.getElementById('f-merchant').value.toLowerCase();
+  const tam = document.getElementById('f-tam').value.toLowerCase();
+  const category = document.getElementById('f-category').value;
+  const minRev = parseFloat(document.getElementById('f-revenue').value) || 0;
+  let visible = 0;
+  tamTbody.querySelectorAll('tr').forEach(tr => {
+    const show =
+      tr.dataset.merchant.includes(merchant) &&
+      tr.dataset.tam.includes(tam) &&
+      (category === '' || tr.dataset.category === category) &&
+      parseFloat(tr.dataset.revenue) >= minRev;
+    tr.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+  document.getElementById('f-count').textContent = `Showing ${visible} of ${sorted.length} accounts`;
+}
+
+// TAM bars
+const tamBarsEl = document.getElementById('tam-bars');
+const maxAccounts = Math.max(...tamNames.map(t => tamMap[t].accounts.length));
+tamNames.forEach((tam, i) => {
+  const data = tamMap[tam];
+  const pct = (data.accounts.length / maxAccounts * 100).toFixed(0);
+  const div = document.createElement('div');
+  div.className = 'bar-row';
+  div.innerHTML = `
+    <div class="bar-label">
+      <span class="bar-name">${tam}</span>
+      <span class="bar-val">${data.accounts.length} accounts · ${formatRevenue(data.revenue)}</span>
+    </div>
+    <div class="bar-track">
+      <div class="bar-fill" style="width: ${pct}%; background: ${COLORS[i % COLORS.length]}aa;"></div>
+    </div>
+  `;
+  tamBarsEl.appendChild(div);
+});
+
+// ===================== PIPELINE VIEW =====================
+// SE bars early
+const seBarsEarlyEl = document.getElementById('se-bars-early');
+const maxEarlyOpps = Math.max(...Object.values(seMapEarly).map(s => s.opps.length));
+const seEarlySorted = Object.keys(seMapEarly).filter(s => !EXCLUDE_PEOPLE.includes(s)).sort((a,b) => seMapEarly[b].opps.length - seMapEarly[a].opps.length);
+seEarlySorted.forEach((se, i) => {
+  const data = seMapEarly[se];
+  const pct = (data.opps.length / maxEarlyOpps * 100).toFixed(0);
+  const isUnassigned = se === 'Unassigned';
+  const contractCount = (contractsBySE[se] || []).length;
+  const contractChip = contractCount > 0
+    ? ` · <span style="color:var(--green);font-weight:600;">${contractCount} closed deal${contractCount > 1 ? 's' : ''}</span>`
+    : '';
+  const div = document.createElement('div');
+  div.className = 'bar-row';
+  div.innerHTML = `
+    <div class="bar-label">
+      <span class="bar-name ${isUnassigned ? 'text-red' : ''}">${se}</span>
+      <span class="bar-val">${data.opps.length} opps · TAR ${formatTAR(data.tar)}${contractChip}</span>
+    </div>
+    <div class="bar-track">
+      <div class="bar-fill" style="width: ${pct}%; background: ${isUnassigned ? 'var(--red)' : COLORS[i % COLORS.length]}aa;"></div>
+    </div>
+  `;
+  seBarsEarlyEl.appendChild(div);
+});
+
+// SE bars contract
+const seBarsContractEl = document.getElementById('se-bars-contract');
+const maxContractOpps = Math.max(...Object.values(seMapContract).map(s => s.opps.length));
+const seContractSorted = Object.keys(seMapContract).filter(s => !EXCLUDE_PEOPLE.includes(s)).sort((a,b) => seMapContract[b].opps.length - seMapContract[a].opps.length);
+seContractSorted.forEach((se, i) => {
+  const data = seMapContract[se];
+  const pct = (data.opps.length / maxContractOpps * 100).toFixed(0);
+  const isUnassigned = se === 'Unassigned';
+  const div = document.createElement('div');
+  div.className = 'bar-row';
+  div.innerHTML = `
+    <div class="bar-label">
+      <span class="bar-name ${isUnassigned ? 'text-red' : ''}">${se}</span>
+      <span class="bar-val">${data.opps.length} opps · TAR ${formatTAR(data.tar)}</span>
+    </div>
+    <div class="bar-track">
+      <div class="bar-fill green" style="width: ${pct}%; background: ${isUnassigned ? 'var(--orange)' : 'var(--green)'}aa;"></div>
+    </div>
+  `;
+  seBarsContractEl.appendChild(div);
+});
+
+// Pipeline columns
+const pipelineEl = document.getElementById('pipeline-cols');
+stageOrder.forEach(stage => {
+  const oppsInStage = earlyOpps.filter(o => o.stage === stage);
+  if (oppsInStage.length === 0) return;
+  const col = document.createElement('div');
+  col.className = 'pipeline-col';
+  col.innerHTML = `
+    <div class="pipeline-stage-title" style="color: ${stageColor(stage)}">${stage.replace(/^\d+ - /,'')}</div>
+    <div class="pipeline-count">${oppsInStage.length}</div>
+    ${oppsInStage.slice(0,6).map(o => `
+      <div class="pipeline-item">
+        <div class="pipeline-item-name">${o.account || o.name}</div>
+        <div class="pipeline-item-se">${o.se === 'Unassigned' ? '<span style="color:#FF4D6A">No SE</span>' : o.se.split(' ')[0]}</div>
+      </div>
+    `).join('')}
+    ${oppsInStage.length > 6 ? `<div style="font-size:11px;color:var(--text-muted);text-align:center;margin-top:6px;">+${oppsInStage.length - 6} more</div>` : ''}
+  `;
+  pipelineEl.appendChild(col);
+});
+
+// ===================== PEOPLE VIEW =====================
+// Collect all people: TAMs from liveAccounts, SEs from opps
+const allPeople = new Set([
+  ...Object.keys(tamMap),
+  ...Object.keys(seMapEarly),
+  ...Object.keys(seMapContract),
+]);
+EXCLUDE_PEOPLE.forEach(p => allPeople.delete(p));
+
+const personGrid = document.getElementById('person-grid');
+
+[...allPeople].sort().forEach((person, idx) => {
+  const tamData = tamMap[person];
+  const seEarlyData = seMapEarly[person];
+  const seContractData = seMapContract[person];
+  const isIM = imsTams.includes(person);
+
+  // IMs: use csMapTam (same source as Overview chart) instead of seMapContract
+  const csAccountsForPerson = csMapTam[person]?.accounts || [];
+  const contractItems = isIM
+    ? csAccountsForPerson.map(a => ({ n: a.merchant, r: a.revenue }))
+    : (seContractData?.opps || []).map(o => ({ n: o.account || o.name, r: o.tar }));
+  const contractCount = isIM ? csAccountsForPerson.length : (seContractData?.opps.length || 0);
+
+  const isTeamLead = person === 'Deisy Paola Leal';
+  const roles = [];
+  if (tamData) roles.push(isIM ? 'IM' : 'TAM');
+  if (isTeamLead) roles.push('Team Lead');
+  if (!isIM && (seEarlyData || seContractData)) roles.push('SE');
+
+  const liveCount = tamData?.accounts.length || 0;
+  const earlyCount = seEarlyData?.opps.length || 0;
+  const totalRev = tamData?.revenue || 0;
+
+  const card = document.createElement('div');
+  card.className = 'person-card';
+
+  // Load indicator
+  let loadColor = 'var(--green)';
+  const totalLoad = liveCount + earlyCount + contractCount;
+  if (totalLoad > 20) loadColor = 'var(--red)';
+  else if (totalLoad > 12) loadColor = 'var(--orange)';
+  else if (totalLoad > 7) loadColor = 'var(--yellow)';
+
+  card.innerHTML = `
+    <div class="person-avatar" style="background: linear-gradient(135deg, ${COLORS[idx % COLORS.length]}88, ${COLORS[(idx+2) % COLORS.length]}88);">
+      ${initials(person)}
+    </div>
+    <div class="person-name">${person}</div>
+    <div class="person-role">
+      ${roles.map(r => `<span class="chip" style="margin-right:4px;${r === 'Team Lead' ? 'background:rgba(255,209,102,0.2);color:#FFD166;' : r === 'IM' ? 'background:rgba(0,214,143,0.15);color:#00D68F;' : ''}">${r}</span>`).join('')}
+    </div>
+    <div class="person-stats">
+      <div class="stat-box" ${liveCount > 0 ? `data-tip="live" data-merchants='${JSON.stringify((tamData?.accounts||[]).map(a=>({n:a.merchant,r:a.revenue}))).replace(/'/g,"&#39;")}'` : ''}>
+        <div class="stat-box-label">LIVE Accounts</div>
+        <div class="stat-box-val" style="color: ${liveCount > 0 ? 'white' : 'var(--text-muted)'};">${liveCount}</div>
+        ${totalRev > 0 ? `<div class="stat-box-sub">${formatRevenue(totalRev)} rev</div>` : ''}
+      </div>
+      <div class="stat-box" ${earlyCount > 0 ? `data-tip="early" data-merchants='${JSON.stringify((seEarlyData?.opps||[]).map(o=>({n:o.account||o.name,r:o.tar}))).replace(/'/g,"&#39;")}'` : ''}>
+        <div class="stat-box-label">Early Stage</div>
+        <div class="stat-box-val" style="color: ${earlyCount > 0 ? 'white' : 'var(--text-muted)'};">${earlyCount}</div>
+        ${earlyCount > 0 ? `<div class="stat-box-sub">TAR ${formatTAR(seEarlyData?.tar||0)}</div>` : ''}
+      </div>
+      <div class="stat-box" ${contractCount > 0 ? `data-tip="contract" data-merchants='${JSON.stringify(contractItems).replace(/'/g,"&#39;")}'` : ''}>
+        <div class="stat-box-label">Contract Signed</div>
+        <div class="stat-box-val" style="color: ${contractCount > 0 ? 'var(--green)' : 'var(--text-muted)'};">${contractCount}</div>
+        ${contractCount > 0 && !isIM ? `<div class="stat-box-sub">TAR ${formatTAR(seContractData?.tar||0)}</div>` : ''}
+      </div>
+      <div class="stat-box">
+        <div class="stat-box-label">Total Load</div>
+        <div class="stat-box-val" style="color: ${loadColor};">${totalLoad}</div>
+        <div class="stat-box-sub">items</div>
+      </div>
+    </div>
+    ${tamData ? `
+    <div style="margin-top: 12px;">
+      <div class="tag-list">
+        ${Object.entries(tamData.categories).map(([c,n]) => `<span class="tag">${c} (${n})</span>`).join('')}
+      </div>
+    </div>
+    ` : ''}
+  `;
+
+  personGrid.appendChild(card);
+});
+
+// ===================== POPOVER =====================
+const pop = document.createElement('div');
+pop.className = 'pop';
+document.body.appendChild(pop);
+
+const tipLabels = { live: 'LIVE Accounts', early: 'Early Stage', contract: 'Contract Signed' };
+
+document.addEventListener('mouseover', e => {
+  const box = e.target.closest('.stat-box[data-tip]');
+  if (!box) return;
+  const type = box.dataset.tip;
+  const merchants = JSON.parse(box.dataset.merchants || '[]');
+  pop.innerHTML = `
+    <div class="pop-title">${tipLabels[type] || type}</div>
+    ${merchants.map(m => `
+      <div class="pop-item">
+        <span>${m.n}</span>
+        ${m.r > 0 ? `<span class="pop-item-rev">${type === 'live' ? formatRevenue(m.r) : formatTAR(m.r)}</span>` : ''}
+      </div>
+    `).join('')}
+  `;
+  pop.classList.add('visible');
+});
+
+document.addEventListener('mousemove', e => {
+  if (!pop.classList.contains('visible')) return;
+  const x = e.clientX + 16;
+  const y = e.clientY + 16;
+  const w = pop.offsetWidth;
+  const h = pop.offsetHeight;
+  pop.style.left = (x + w > window.innerWidth ? e.clientX - w - 8 : x) + 'px';
+  pop.style.top  = (y + h > window.innerHeight ? e.clientY - h - 8 : y) + 'px';
+});
+
+document.addEventListener('mouseout', e => {
+  if (!e.target.closest('.stat-box[data-tip]')) return;
+  if (!e.relatedTarget?.closest('.stat-box[data-tip]')) pop.classList.remove('visible');
+});
+
+// ===================== TABS =====================
+function switchView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+
+</body>
+</html>
