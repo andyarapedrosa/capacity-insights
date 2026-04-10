@@ -1218,7 +1218,6 @@ stageOrder.forEach(stage => {
   if (oppsInStage.length === 0) return;
   const col = document.createElement('div');
   col.className = 'pipeline-col';
-  const colId = `pipeline-extra-${stage.replace(/\W/g,'_')}`;
   col.innerHTML = `
     <div class="pipeline-stage-title" style="color: ${stageColor(stage)}">${stage.replace(/^\d+ - /,'')}</div>
     <div class="pipeline-count">${oppsInStage.length}</div>
@@ -1229,7 +1228,7 @@ stageOrder.forEach(stage => {
       </div>
     `).join('')}
     ${oppsInStage.length > 6 ? `
-      <div id="${colId}" style="display:none;">
+      <div class="pipeline-extra" style="display:none;">
         ${oppsInStage.slice(6).map(o => `
           <div class="pipeline-item">
             <div class="pipeline-item-name">${o.account || o.name}</div>
@@ -1237,17 +1236,23 @@ stageOrder.forEach(stage => {
           </div>
         `).join('')}
       </div>
-      <div onclick="
-        const el = document.getElementById('${colId}');
-        const isHidden = el.style.display === 'none';
-        el.style.display = isHidden ? 'block' : 'none';
-        this.textContent = isHidden ? 'Show less ▲' : '+${oppsInStage.length - 6} more ▼';
-      " style="font-size:11px;color:var(--purple-light);text-align:center;margin-top:6px;cursor:pointer;user-select:none;padding:4px;border-radius:4px;background:rgba(108,71,255,0.1);">
+      <div class="pipeline-more-btn" data-count="${oppsInStage.length - 6}" style="font-size:11px;color:var(--purple-light);text-align:center;margin-top:6px;cursor:pointer;user-select:none;padding:4px;border-radius:4px;background:rgba(108,71,255,0.1);">
         +${oppsInStage.length - 6} more ▼
       </div>
     ` : ''}
   `;
   pipelineEl.appendChild(col);
+
+  // attach click handler after DOM insert
+  const btn = col.querySelector('.pipeline-more-btn');
+  if (btn) {
+    const extra = col.querySelector('.pipeline-extra');
+    btn.addEventListener('click', () => {
+      const isHidden = extra.style.display === 'none';
+      extra.style.display = isHidden ? 'block' : 'none';
+      btn.textContent = isHidden ? 'Show less ▲' : `+${btn.dataset.count} more ▼`;
+    });
+  }
 });
 
 // ===================== PEOPLE VIEW =====================
